@@ -27,6 +27,8 @@ object VortexDiagrams extends Predef:
   val arrowsInput: html.Input = window.document.querySelector("#arrows").asInstanceOf[html.Input]
   val algorithmInput: html.Select = window.document.querySelector("#algorithm").asInstanceOf[html.Select]
 
+  val downloadButton: html.Anchor = window.document.querySelector("#download-button").asInstanceOf[html.Anchor]
+
   def valid: Boolean = multiplierInput.value.toIntOption.isDefined && moduloInput.value.toIntOption.isDefined && algos.contains(algorithmInput.value)
 
   inline val padding = 50
@@ -88,6 +90,9 @@ object VortexDiagrams extends Predef:
           ctx.moveTo(a.x, a.y)
           ctx.lineTo(b.x, b.y)
           ctx.stroke()
+      // Adapted from https://stackoverflow.com/a/44487883, shared under CC-BY-SA 3.0
+      downloadButton.setAttribute("download", s"Vortex Diagram (modulo = $modulo, multiplier = $multiplier, ${if arrows then "arrows, " else ""}${algorithmInput.value}).png")
+      downloadButton.href = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream")
     else
       debug("invalid!")
 
