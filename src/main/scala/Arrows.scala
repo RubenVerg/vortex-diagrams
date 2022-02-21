@@ -6,7 +6,7 @@ import org.scalajs.dom.CanvasRenderingContext2D
 
 object Arrows:
   extension (ctx: CanvasRenderingContext2D)
-    def arrow(a: Point, b: Point, control: Seq[Point] = Seq(Point(0, 1), Point(-10, 1), Point(-10, 5))): Unit =
+    def arrow(a: Point, b: Point, control: Seq[Point] = Seq(Point(0, 0.5), Point(-5, 0.5), Point(-5, 3))): Unit =
       val d = b - a
       val len = d.magnitude
       val Point(c, s) = d.normalize
