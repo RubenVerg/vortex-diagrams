@@ -25,6 +25,7 @@ object VortexDiagrams extends Predef:
   val multiplierInput: html.Input = window.document.querySelector("#multiplier").asInstanceOf[html.Input]
   val moduloInput: html.Input = window.document.querySelector("#modulo").asInstanceOf[html.Input]
   val arrowsInput: html.Input = window.document.querySelector("#arrows").asInstanceOf[html.Input]
+  val labelsInput: html.Input = window.document.querySelector("#labels").asInstanceOf[html.Input]
   val algorithmInput: html.Select = window.document.querySelector("#algorithm").asInstanceOf[html.Select]
 
   val downloadButton: html.Anchor = window.document.querySelector("#download-button").asInstanceOf[html.Anchor]
@@ -33,10 +34,11 @@ object VortexDiagrams extends Predef:
 
   inline val padding = 50
 
-  def multiplier: Int = multiplierInput.value.toInt
-  def modulo: Int = moduloInput.value.toInt
-  def algorithm: Algorithm = algos(algorithmInput.value)
-  def arrows: Boolean = arrowsInput.checked
+  inline def multiplier: Int = multiplierInput.value.toInt
+  inline def modulo: Int = moduloInput.value.toInt
+  inline def algorithm: Algorithm = algos(algorithmInput.value)
+  inline def arrows: Boolean = arrowsInput.checked
+  inline def labels: Boolean = labelsInput.checked
 
   def radius =
     inline val wanted = 400
@@ -63,6 +65,10 @@ object VortexDiagrams extends Predef:
   def height: Int = canvas.height
   def center: Point = Point(canvas.width / 2, canvas.height / 2)
   def number(n: Int): Point = center + Point.unitCircle(2 * n * Pi / modulo).rotate(-Pi / 2) * radius
+  def numberText(n: Int): (String, Point) =
+    val text = n.toString
+    val point = center + Point.unitCircle(2 * n * Pi / modulo).rotate(-Pi / 2) * (radius + padding / 4)
+    (text, point)
 
   def draw(): Unit =
     debug("drawing")
@@ -73,6 +79,14 @@ object VortexDiagrams extends Predef:
       ctx.beginPath()
       ctx.arc(center.x, center.y, radius, 0, 2 * Pi, false)
       ctx.stroke()
+      ctx.textAlign = "center"
+      ctx.textBaseline = "middle"
+      if labels then
+        for
+          i <- 0 until modulo
+          (text, Point(x, y)) = numberText(i)
+        do
+          ctx.fillText(text, x, y)
       for ((pa, pb), n) <- Edges.all(modulo, multiplier).zipWithIndex do
         val a = number(pa)
         val b = number(pb)
@@ -106,4 +120,5 @@ object VortexDiagrams extends Predef:
     moduloInput.addEventListener("input", evt => draw())
     algorithmInput.addEventListener("input", evt => draw())
     arrowsInput.addEventListener("input", evt => draw())
+    labelsInput.addEventListener("input", evt => draw())
     window.addEventListener("resize", evt => draw())
