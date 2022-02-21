@@ -51,7 +51,7 @@ libraryDependencies ++= Seq(
   "com.lihaoyi" %%% "scalatags" % "0.11.1",
   "io.github.cquiroz" %%% "scala-java-time" % "2.4.0-M1",
 )
-version := "1.0.0"
+version := "1.1.0"
 scalaVersion := "3.1.1"
 developers ++= List(Developer("rubenverg", "Ruben Vergani", "me@rubenverg.com", new java.net.URL("https://rubenverg.com")))
 production := false
