@@ -46,6 +46,7 @@ name := "vortex-diagrams"
 idePackagePrefix := Some("com.rubenverg.vortex")
 libraryDependencies ++= Seq(
   "org.scalatest" %%% "scalatest" % "3.2.11" % Test,
+  "org.scalatestplus" %% "scalacheck-1-15" % "3.2.11.0" % Test,
   "org.scalacheck" %%% "scalacheck" % "1.15.4" % Test,
   "org.scala-js" %%% "scalajs-dom" % "2.1.0",
   "com.lihaoyi" %%% "scalatags" % "0.11.1",

@@ -15,12 +15,6 @@
             <p>
                 Dots represent a number that is equal to itself when multiplied in modulo
             </p>
-            <p>Coloring Algorithms:</p>
-            <ul>
-                <li>Black: all lines are black, no coloring is applied</li>
-                <li>By Length: lines are colored with hue based on their length in proportion to the circle diameter</li>
-                <li>By Loops: lines that are part of a loop get a color per loop, the ones that point into a loop node but aren't in a loop themselves are black (this may be quite slow for large moduli)</li>
-            </ul>
             <p>
                 By RubenVerg. Source code available <a href="https://github.com/RubenVerg/vortex-diagrams">on GitHub</a>.
             </p>
@@ -33,17 +27,35 @@
             <pre id="build-info">Loading...</pre>
         </div>
         <div class="mb-3">
-            <label for="multiplier" class="form-label">Multiplier</label>
-            <input type="number" class="form-control" id="multiplier" value="2">
-        </div>
-        <div class="mb-3">
             <label for="modulo" class="form-label">Modulo</label>
             <input type="number" class="form-control" id="modulo" value="9">
+        </div>
+        <div class="mb-3 row">
+            <div class="col">
+                <label class="form-check-label" for="operation">Operation</label>
+                <select class="form-select" aria-label="Operation" id="operation">
+                    <option selected value="multiply">Multiply</option>
+                    <option value="power">Power</option>
+                    <option value="exp">Exponential</option>
+                    <option value="add">Add</option>
+                </select>
+                <div id="operation-help" class="form-text">
+                    Loading...
+                </div>
+            </div>
+
+            <div class="col">
+                <label for="operand" class="form-label">Operand</label>
+                <input type="number" class="form-control" id="operand" value="2">
+            </div>
         </div>
         <div class="mb-3">
             <div class="form-check form-switch">
                 <label class="form-check-label" for="arrows">Show Arrows</label>
                 <input class="form-check-input" type="checkbox" role="switch" id="arrows">
+            </div>
+            <div class="form-text">
+                If enabled, lines get an arrow head that indicates the direction: the arrow points from the number to the operation result.
             </div>
         </div>
         <div class="mb-3">
@@ -51,14 +63,20 @@
                 <label class="form-check-label" for="arrows">Show Labels</label>
                 <input class="form-check-input" type="checkbox" role="switch" id="labels" checked>
             </div>
+            <div class="form-text">
+                If enabled, number nodes have labels next to them. Not recommended for large moduli.
+            </div>
         </div>
         <div class="mb-3">
-            <label class="form-check-label" for="algorithm">Coloring Algorithm</label>
-            <select class="form-select" aria-label="Coloring Algorithm" id="algorithm">
+            <label class="form-check-label" for="coloring">Coloring</label>
+            <select class="form-select" aria-label="Coloring" id="coloring">
                 <option selected value="black">Black</option>
                 <option value="length">By Length</option>
                 <option value="loops">By Loops</option>
             </select>
+            <div id="coloring-help" class="form-text">
+                Loading...
+            </div>
         </div>
         <a class="mb-3 btn btn-secondary" id="download-button">Download</a>
     </div>

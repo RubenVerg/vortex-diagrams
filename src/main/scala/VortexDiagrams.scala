@@ -11,32 +11,47 @@ import scala.math.*
 import java.time.Clock
 
 import Arrows.*
+import Predef.*
 
-object VortexDiagrams extends Predef:
-  val algos: Map[String, Algorithm] = Map(
-    "black" -> PureAlgorithm { (a, b, mult, mod) => "black" },
-    "length" -> PureAlgorithm { (a, b, mult, mod) => s"hsl(${number(a).distance(number(b)) / diameter}turn, 100%, 50%)" },
-    "loops" -> LoopAlgorithm,
+object VortexDiagrams:
+  val colorings: Map[String, Coloring] = Map(
+    "black" -> PureColoring("""All lines are black, no coloring is applied""") { (a, b, mod, op, operation) => "black" },
+    "length" -> PureColoring("""Lines are colored with hue based on their length in proportion to the circle diameter""") { (a, b, mod, op, operation) => s"hsl(${number(a).distance(number(b)) / diameter}turn, 100%, 50%)" },
+    "loops" -> LoopColoring,
   )
 
-  val canvas: html.Canvas = window.document.querySelector("canvas").asInstanceOf[html.Canvas]
+  val operations: Map[String, Operation] = Map(
+    "multiply" -> MultiplicationOperation,
+    "power" -> PowerOperation,
+    "exp" -> ExponentialOperation,
+    "add" -> AdditionOperation,
+  )
+
+  val canvas: html.Canvas = $("canvas")
   val ctx: dom.CanvasRenderingContext2D = canvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
 
-  val multiplierInput: html.Input = window.document.querySelector("#multiplier").asInstanceOf[html.Input]
-  val moduloInput: html.Input = window.document.querySelector("#modulo").asInstanceOf[html.Input]
-  val arrowsInput: html.Input = window.document.querySelector("#arrows").asInstanceOf[html.Input]
-  val labelsInput: html.Input = window.document.querySelector("#labels").asInstanceOf[html.Input]
-  val algorithmInput: html.Select = window.document.querySelector("#algorithm").asInstanceOf[html.Select]
+  val operationInput: html.Select = $("#operation")
+  val operandInput: html.Input = $("#operand")
+  val moduloInput: html.Input = $("#modulo")
+  val arrowsInput: html.Input = $("#arrows")
+  val labelsInput: html.Input = $("#labels")
+  val coloringInput: html.Select = $("#coloring")
 
-  val downloadButton: html.Anchor = window.document.querySelector("#download-button").asInstanceOf[html.Anchor]
+  val operationHelp: html.Paragraph = $("#operation-help")
+  val coloringHelp: html.Paragraph = $("#coloring-help")
 
-  def valid: Boolean = multiplierInput.value.toIntOption.isDefined && moduloInput.value.toIntOption.isDefined && algos.contains(algorithmInput.value)
+  val downloadButton: html.Anchor = $("#download-button").asInstanceOf[html.Anchor]
+
+  def valid: Boolean =
+    debug(s"valid? operand = ${operandInput.value}, modulo = ${moduloInput.value}, coloring = ${coloringInput.value} in ${colorings.keys}, operation = ${operationInput.value} in ${operations.keys}")
+    operandInput.value.toIntOption.isDefined && moduloInput.value.toIntOption.isDefined && colorings.contains(coloringInput.value) && operations.contains(operationInput.value)
 
   inline val padding = 50
 
-  inline def multiplier: Int = multiplierInput.value.toInt
+  inline def operation: Operation = operations(operationInput.value)
+  inline def operand: Int = operandInput.value.toInt
   inline def modulo: Int = moduloInput.value.toInt
-  inline def algorithm: Algorithm = algos(algorithmInput.value)
+  inline def coloring: Coloring = colorings(coloringInput.value)
   inline def arrows: Boolean = arrowsInput.checked
   inline def labels: Boolean = labelsInput.checked
 
@@ -59,7 +74,7 @@ object VortexDiagrams extends Predef:
   def clear(): Unit =
     canvas.width = diameter + padding
     canvas.height = diameter + padding
-    algorithm.reset()
+    coloring.reset()
 
   def width: Int = canvas.width
   def height: Int = canvas.height
@@ -70,55 +85,63 @@ object VortexDiagrams extends Predef:
     val point = center + Point.unitCircle(2 * n * Pi / modulo).rotate(-Pi / 2) * (radius + padding / 4)
     (text, point)
 
+  def updateLabels(): Unit =
+    coloringHelp.textContent = coloring.description
+    operationHelp.textContent = operation.description
+
   def draw(): Unit =
     debug("drawing")
-
-    if valid then
-      clear()
-      ctx.strokeStyle = "black"
+    clear()
+    ctx.strokeStyle = "black"
+    ctx.beginPath()
+    ctx.arc(center.x, center.y, radius, 0, 2 * Pi, false)
+    ctx.stroke()
+    ctx.textAlign = "center"
+    ctx.textBaseline = "middle"
+    if labels then
+      for
+        i <- 0 until modulo
+        (text, Point(x, y)) = numberText(i)
+      do
+        ctx.fillText(text, x, y)
+    for ((pa, pb), n) <- operation.edges(modulo)(operand).zipWithIndex do
+      val a = number(pa)
+      val b = number(pb)
+      val style = coloring(n, operation(modulo)(operand)(n) %% modulo, modulo, operand, operation)
+      ctx.fillStyle = style
+      ctx.strokeStyle = style
       ctx.beginPath()
-      ctx.arc(center.x, center.y, radius, 0, 2 * Pi, false)
-      ctx.stroke()
-      ctx.textAlign = "center"
-      ctx.textBaseline = "middle"
-      if labels then
-        for
-          i <- 0 until modulo
-          (text, Point(x, y)) = numberText(i)
-        do
-          ctx.fillText(text, x, y)
-      for ((pa, pb), n) <- Edges.all(modulo, multiplier).zipWithIndex do
-        val a = number(pa)
-        val b = number(pb)
-        val style = algorithm(n, (multiplier * n) % modulo, modulo, multiplier)
-        ctx.fillStyle = style
-        ctx.strokeStyle = style
-        ctx.beginPath()
-        if a == b then
-          ctx.arc(a.x, a.y, 2.5, 0, 2 * Pi, false)
-          ctx.fill()
-        else if arrows then
-          ctx.arrow(a, b)
-          ctx.fill()
-        else
-          ctx.moveTo(a.x, a.y)
-          ctx.lineTo(b.x, b.y)
-          ctx.stroke()
-      // Adapted from https://stackoverflow.com/a/44487883, shared under CC-BY-SA 3.0
-      downloadButton.setAttribute("download", s"Vortex Diagram (modulo = $modulo, multiplier = $multiplier, ${if arrows then "arrows, " else ""}${algorithmInput.value}).png")
-      downloadButton.href = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream")
+      if a == b then
+        ctx.arc(a.x, a.y, 2.5, 0, 2 * Pi, false)
+        ctx.fill()
+      else if arrows then
+        ctx.arrow(a, b)
+        ctx.fill()
+      else
+        ctx.moveTo(a.x, a.y)
+        ctx.lineTo(b.x, b.y)
+        ctx.stroke()
+    // Adapted from https://stackoverflow.com/a/44487883, shared under CC-BY-SA 3.0
+    downloadButton.setAttribute("download", s"Vortex Diagram (modulo = $modulo, operation = ${operationInput.value} $operand, ${if arrows then "arrows, " else ""}${coloringInput.value}).png")
+    downloadButton.href = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream")
+
+  def update(): Unit =
+    if valid then
+      updateLabels()
+      draw()
     else
-      debug("invalid!")
+      warn("invalid configuration!")
 
   def main(args: Array[String]): Unit =
     info(versionInfo)
     window.document.querySelector("#build-info").textContent = versionInfo
 
-    draw()
+    update()
 
-    multiplierInput.addEventListener("input", evt => draw())
-    moduloInput.addEventListener("input", evt => draw())
-    algorithmInput.addEventListener("input", evt => draw())
-    arrowsInput.addEventListener("input", evt => draw())
-    labelsInput.addEventListener("input", evt => draw())
-    window.addEventListener("resize", evt => draw())
+    operationInput.addEventListener("input", evt => update())
+    operandInput.addEventListener("input", evt => update())
+    moduloInput.addEventListener("input", evt => update())
+    coloringInput.addEventListener("input", evt => update())
+    arrowsInput.addEventListener("input", evt => update())
+    labelsInput.addEventListener("input", evt => update())
+    window.addEventListener("resize", evt => update())

@@ -22,7 +22,7 @@ Simple algorithms like By Length can use `PureAlgorithm` which takes a function 
 
 More complex algorithms should create a new object inheriting from `Algorithm` with a function `apply` (same as the pure one) and `reset` that is meant for some kind of cleanup (called each time a redraw is triggered)
 
-`Predef` defines some common utilities such as `debug`, `log`, `info`, `warn` and `error` for writing to the JS console, converting between `java.time.Instant`s and JS `Date`s, and the standard `Intl` instances that should be used. To use them, make your object/class/whatever extend `Predef`. Feel free to add stuff you may need.
+`Predef` defines some common utilities such as `debug`, `log`, `info`, `warn` and `error` for writing to the JS console, converting between `java.time.Instant`s and JS `Date`s, and the standard `Intl` instances that should be used. Most importantly, it contains `%%`, the mathematically-correct modulus operation to be used instead of standard `%` (which doesn't work well with negative numbers).
 
 `Edges` contains utilities for computing edges
 
